@@ -24,7 +24,7 @@ def whitelistUser(player):
     try:
         with MCRcon(RCON_HOST, rcon_password, port=RCON_PORT) as mcr:
             print("Attempting to whitelist user...")
-            return mcr.command(f"/whitelist {player}")
+            return mcr.command(f"/whitelist add {player}")
     except Exception as e:
         print(f"Failed to whitelist via RCON: {e}")
         return None
