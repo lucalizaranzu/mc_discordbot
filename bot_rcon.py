@@ -11,27 +11,11 @@ rcon_password = os.getenv('RCON_PASSWORD')
 RCON_HOST = "localhost"
 RCON_PORT = 25575
 
-mcr = None
-
-def ensure_connection():
-    global mcr
-    try:
-        if mcr is None:
-            mcr = MCRcon(RCON_HOST, rcon_password, port=RCON_PORT)
-            mcr.connect()
-        elif not mcr.socket:
-            mcr.connect()
-    except MCRconException as e:
-        print("RCON connection failed:", e)
-        mcr = None
-
-
 def sendServerMessage(message):
-    ensure_connection()
-    if mcr:
-        try:
+    try:
+        with MCRcon(RCON_HOST, rcon_password, port=RCON_PORT) as mcr:
+            print("Attempting to send message...")
             return mcr.command(f"/say {message}")
-        except Exception as e:
-            print(f"Failed to send message via RCON: {e}")
-            return None
-    return None
+    except Exception as e:
+        print(f"Failed to send message via RCON: {e}")
+        return None

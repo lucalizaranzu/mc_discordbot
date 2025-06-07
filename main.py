@@ -18,10 +18,8 @@ intents.message_content = True
 intents.members = True
 
 
-
 #Bot instantiation
 bot = commands.Bot(command_prefix='!', intents=intents)
-
 
 
 # Event handler for when bot is started
@@ -36,7 +34,11 @@ async def setserverdirectory(ctx, arg):
     await ctx.send(f'Server directory set to: {os.environ["SERVER_DIRECTORY"]}')
 
 @bot.command()
-async def sendServerMessage(ctx, arg):
+async def getserverdirectory(ctx):
+    await ctx.send(f"server directory set to: {os.environ['SERVER_DIRECTORY']}")
+
+@bot.command()
+async def sendmessage(ctx, arg):
     result = await bot_rcon.sendServerMessage(arg)
     if result:
         await ctx.send(f"Message sent to server: {arg}")
