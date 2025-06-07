@@ -23,6 +23,7 @@ def sendServerMessage(message):
 def whitelistUser(player):
     try:
         with MCRcon(RCON_HOST, rcon_password, port=RCON_PORT) as mcr:
+            print("Attempting to whitelist user...")
             return mcr.command(f"/whitelist {player}")
     except Exception as e:
         print(f"Failed to whitelist via RCON: {e}")

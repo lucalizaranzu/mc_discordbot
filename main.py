@@ -47,6 +47,7 @@ async def sendmessage(ctx, arg):
 
 @bot.command()
 async def whitelist(ctx, arg):
+    await ctx.send(f"Attempting to whitelist user {arg}")
     result = await bot_rcon.whitelistUser(arg)
     if result:
         await ctx.send(f"User {arg} whitelisted successfully.")
