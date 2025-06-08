@@ -1,8 +1,21 @@
 {
-    "moderator_roles": [
-        1381169059432759326
+    "existing_permissions": [
+        "administrator",
+        "moderator",
+        "unlimited_whitelist"
     ],
-    "admin_roles": [
-        1380838095099793428
-    ]
+    "role_permissions": {
+        "1380838095099793428": [
+            "administrator",
+            "moderator",
+            "unlimited_whitelist"
+        ],
+        "1381169059432759326": [
+            "moderator",
+            "unlimited_whitelist"
+        ],
+        "1381396579843309578": [
+            "unlimited_whitelist"
+        ]
+    }
 }

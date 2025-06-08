@@ -17,27 +17,42 @@ def readJSON(file_path):
             print("Invalid or empty JSON file")
             return {}
 
-def updateJSON(file_path : str, json_data : dict):
+def updateJSON(path, data):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
 
-    with open(file_path, "w") as file:
-        json.dump(json_data, file, indent=4)
 
+def requires_custom_permission(permission, cfg):
 
-def requires_roles_from_config(key, cfg):
     async def predicate(ctx):
-        allowed_roles = set(cfg.get(key, []))
-        user_roles = {role.id for role in ctx.author.roles}
-        if user_roles & allowed_roles or ctx.author.guild_permissions.administrator: #Admins bypass
+        if check_user_permissions(ctx, cfg, permission):
             return True
         raise commands.CheckFailure("You do not have permission.")
     return commands.check(predicate)
 
-def checkRoles(ctx, cfg, allowed_roles):
+def check_user_permissions(ctx, cfg, permission):
+
+    if ctx.author.guild_permissions.administrator: #Administrator has all permissions
+        return True
 
     sender_roles = {role.id for role in ctx.author.roles}
 
-    allowed_roles_set = set(cfg[allowed_roles])
+    for role in sender_roles:
+        role_permissions = get_role_permissions(cfg, role)
+        if permission in role_permissions:
+            return True
 
-    has_role = not sender_roles.isdisjoint(allowed_roles_set)
+    return False
 
-    return has_role or ctx.author.guild_permissions.administrator  #Allow admins to bypass role checks
+def get_role_permissions(cfg, role):
+    """
+    Returns a set of permissions for a given role based on the config.
+    """
+    role_permissions = cfg.get('role_permissions', {})
+    return set(role_permissions.get(str(role.id), []))
+
+def is_user_in_whitelist(data, username):
+    for users in data.values():
+        if username in users:
+            return True
+    return False
