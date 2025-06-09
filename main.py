@@ -275,8 +275,10 @@ async def list(ctx, role: discord.Role):
 
     role_permissions = f"Permissions for role '{role.name}':\n>>> "
 
-    if role.id in config['role_permissions'] and config['role_permissions'][role.id]:
-        for permission in set(config['role_permissions'].get(str(role.id), [])):
+    rolestr = str(role.id)
+
+    if rolestr in config['role_permissions'] and config['role_permissions'][rolestr]:
+        for permission in set(config['role_permissions'].get(rolestr, [])):
             role_permissions += f"{permission}\n"
 
         await ctx.send(role_permissions)
