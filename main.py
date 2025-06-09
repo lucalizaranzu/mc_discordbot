@@ -67,7 +67,7 @@ async def mccommand(ctx, *, command):
     """
     response = await brcon.call_mc_command(ctx, str(command))
     if response:
-        await ctx.send(f"Executed command: {response}")
+        await ctx.send(f"### Executed command: {response}")
     else:
         return
 
@@ -77,10 +77,10 @@ async def mccommand(ctx, *, command):
 async def whitelist(ctx):
     """
     Adds or removes users to/from whitelist, or lists
-    Usage: !whitelist [add|remove|check] [username]
+    Usage: !whitelist [add|remove|check|modremove] [username]
     Usage: !whitelist [list|listall]
     """
-    await ctx.send("Available subcommands:\n>>> add\nremove\nlist\nlistall\ncheck") #default
+    await ctx.send("## Available subcommands:\n>>> add\nremove\nlist\nlistall\ncheck\nmodremove") #default
 
 @whitelist.command()
 async def add(ctx, arg):
@@ -88,7 +88,7 @@ async def add(ctx, arg):
     print(f"Discord user {ctx.author.name} ({sender_UUID}) requested to whitelist user {arg}")
 
     if util.is_user_in_whitelist(server_whitelist, arg):
-        await ctx.send(f"User {arg} has already been whitelisted by you or another user")
+        await ctx.send(f"### User {arg} has already been whitelisted by you or another user")
         return
 
     if sender_UUID not in server_whitelist:
@@ -97,18 +97,16 @@ async def add(ctx, arg):
 
     multiple_whitelist_okay = util.check_user_permissions(ctx, config, "unlimited_whitelist")
 
+    whitelist_user_okay = False
+    remove_other_whitelisted_user = False
+
     if multiple_whitelist_okay: #Case for if user can whitelist multiple users
 
         if arg not in server_whitelist[sender_UUID]:
-            result = await brcon.call_mc_command(ctx, f"/whitelist add {arg}")
-
-            if not result:
-                return
-
-            server_whitelist[sender_UUID].append(arg)
-            await ctx.send(f"User {arg} has been whitelisted.")
+            whitelist_user_okay = True
         else:
-            await ctx.send(f"User {arg} is already whitelisted.")
+            await ctx.send(f"### User {arg} is already whitelisted.")
+            return
 
     else: #Case for if user can only whitelist one user
         print("User does not have moderator role, allowing only one whitelist entry.")
@@ -116,30 +114,40 @@ async def add(ctx, arg):
         currently_whitelisted = server_whitelist[sender_UUID][0] if server_whitelist.get(sender_UUID) else None
 
         if arg == currently_whitelisted:
-            await ctx.send(f"User {arg} is already whitelisted.")
+            await ctx.send(f"### User {arg} is already whitelisted.")
             return
 
         if currently_whitelisted:
-            result = await brcon.call_mc_command(ctx, f"/whitelist remove {currently_whitelisted}")
+            remove_other_whitelisted_user = True
 
-            if not result:
-                return
+        whitelist_user_okay = True
 
-            print(f"Removed {currently_whitelisted} from whitelist.")
 
-        print(f"Whitelisting user {arg}")
-        result = await brcon.call_mc_command(ctx, f"/whitelist add {arg}")
+    if remove_other_whitelisted_user:
+
+        currently_whitelisted = server_whitelist[sender_UUID][0] #Already did checks so we can avoid here
+
+        result = await brcon.call_mc_command(ctx, f"/whitelist remove {currently_whitelisted}")
 
         if not result:
             return
 
-        server_whitelist[sender_UUID] = [arg]
+        server_whitelist[sender_UUID].remove(currently_whitelisted)
+        await ctx.send(f"### Removed {currently_whitelisted} from your whitelist")
 
-        msg = f"User {arg} has been whitelisted."
-        if currently_whitelisted:
-            msg += f" User {currently_whitelisted} has been removed."
+    if whitelist_user_okay:
+        result = await brcon.call_mc_command(ctx, f"/whitelist add {arg}")
 
-        await ctx.send(msg)
+        if "That player does not exist" in result:
+            await ctx.send(f"### Player `{arg}` does not exist. Make sure the username is correct.")
+            return
+
+        if not result:
+            return
+
+        server_whitelist[sender_UUID].append(arg)
+
+        await ctx.send(f"### User {arg} has been added to your whitelist.")
 
     util.updateJSON("data/server_whitelist.json", server_whitelist)
 
@@ -149,7 +157,7 @@ async def remove(ctx, arg):
     print(f"Discord user {ctx.author.name} ({sender_UUID}) requested to remove whitelist user {arg}")
 
     if sender_UUID not in server_whitelist or arg not in server_whitelist[sender_UUID]:
-        await ctx.send(f"User {arg} is not in your whitelist.")
+        await ctx.send(f"### User {arg} is not in your whitelist.")
         return
 
     result = await brcon.call_mc_command(ctx, f"/whitelist remove {arg}")
@@ -157,8 +165,12 @@ async def remove(ctx, arg):
     if not result:
         return
 
+    if "That player does not exist" in result:
+        await ctx.send(f"### Player `{arg}` does not exist. Make sure the username is correct.")
+        return
+
     server_whitelist[sender_UUID].remove(arg)
-    await ctx.send(f"User {arg} has been removed from your whitelist.")
+    await ctx.send(f"### User {arg} has been removed from your whitelist.")
 
     util.updateJSON("data/server_whitelist.json", server_whitelist)
 
@@ -171,7 +183,7 @@ async def list(ctx):
 
     if sender_UUID in server_whitelist and server_whitelist[sender_UUID]:
 
-        whitelisted_users = f"{ctx.author.mention}'s whitelisted user(s):\n>>> "
+        whitelisted_users = f"## {ctx.author.mention}'s whitelisted user(s):\n>>> "
 
         for user in server_whitelist[sender_UUID]:
             whitelisted_users += f"{user}\n"
@@ -179,7 +191,7 @@ async def list(ctx):
         await ctx.send(whitelisted_users,
                        allowed_mentions=discord.AllowedMentions(roles=False)) #Disable mentions
     else:
-        await ctx.send("You have not whitelisted any users.")
+        await ctx.send("### You have not whitelisted any users.")
 
 
 @whitelist.command()
@@ -192,7 +204,7 @@ async def modremove(ctx, username: str):
     all_user_whitelists = [user for user in server_whitelist]
 
     if not all_user_whitelists:
-        await ctx.send("There are no whitelisted users on this server.")
+        await ctx.send("### There are no whitelisted users on this server.")
         return
 
 
@@ -203,12 +215,16 @@ async def modremove(ctx, username: str):
             if not result:
                 return
 
+            if "That player does not exist" in result:
+                await ctx.send(f"### Player `{username}` does not exist. Make sure the username is correct.")
+                return
+
             whitelist_username = bot.get_user(int(user_whitelist)).mention
             if not whitelist_username:
                 whitelist_username = user_whitelist
 
             server_whitelist[user_whitelist].remove(username)
-            await ctx.send(f"{username} has been removed from {whitelist_username}'s whitelist.\n",
+            await ctx.send(f"### {username} has been removed from {whitelist_username}'s whitelist.\n",
                            allowed_mentions=discord.AllowedMentions(roles=False)) #Disable mentions)
 
             #Save changes
@@ -224,10 +240,10 @@ async def listall(ctx):
     all_users = [user for users in server_whitelist.values() for user in users]
 
     if not all_users:
-        await ctx.send("There are no whitelisted users on this server.")
+        await ctx.send("### There are no whitelisted users on this server.")
         return
 
-    whitelisted_users = f"This server's whitelist currently includes:\n>>> "
+    whitelisted_users = f"## This server's whitelist currently includes:\n>>> "
 
     for user in all_users:
         whitelisted_users += f"{user}\n"
@@ -241,31 +257,31 @@ async def check(ctx, username):
     """
 
     if util.is_user_in_whitelist(server_whitelist, username):
-        await ctx.send(f"User {username} is whitelisted.")
+        await ctx.send(f"### User {username} is whitelisted.")
         return
-    await ctx.send(f"User {username} is not whitelisted.")
+    await ctx.send(f"### User {username} is not whitelisted.")
 
 
 #Role permissions
 
-@requires_custom_permission("admin", config) #only admin can edit role permissions
+@requires_custom_permission("administrator", config) #only admin can edit role permissions
 @bot.group(invoke_without_command=True)
 async def rolepermission(ctx):
     """
     Adds or removes custom permissions from a server role
     Usage: !rolepermission [add|remove|list] [role] [permission]
     """
-    await ctx.send("Available subcommands:\n>>> add\nremove\nlist") #default
+    await ctx.send("## Available subcommands:\n>>> add\nremove\nlist") #default
 
 @rolepermission.command()
 async def add(ctx, role: discord.Role, permission: str):
 
     if not isinstance(role, discord.Role):
-        await ctx.send("Invalid role provided.")
+        await ctx.send("### Invalid role provided.")
         return
 
     if permission not in config["existing_permissions"]:
-        await ctx.send(f"Permission '{permission}' is not a valid permission.")
+        await ctx.send(f"### Permission '{permission}' is not a valid permission.")
         return
 
     role_id_str = str(role.id)
@@ -275,11 +291,11 @@ async def add(ctx, role: discord.Role, permission: str):
         role_permissions = []
 
     if permission in role.permissions:
-        await ctx.send(f"Permission '{permission}' already exists for role '{role.name}'.")
+        await ctx.send(f"### Permission '{permission}' already exists for role '{role.name}'.")
         return
 
     role_permissions.append(permission)
-    await ctx.send(f"Permission '{permission}' added to '{role}'.")
+    await ctx.send(f"### Permission '{permission}' added to '{role}'.")
 
     config["role_permissions"][role_id_str] = role_permissions
     util.updateJSON("data/config.json", config)
@@ -290,7 +306,7 @@ async def remove(ctx, role: discord.Role, permission):
     Removes a permission from a role.
     """
     if not isinstance(role, discord.Role):
-        await ctx.send("Invalid role provided.")
+        await ctx.send("### Invalid role provided.")
         return
 
     role_id_str = str(role.id)
@@ -298,15 +314,15 @@ async def remove(ctx, role: discord.Role, permission):
     role_permissions = config['role_permissions'].get(role_id_str)
 
     if not role_permissions:
-        await ctx.send(f"Role '{role.name}' has no permissions to remove")
+        await ctx.send(f"### Role '{role.name}' has no permissions to remove")
         return
 
     if permission not in config['role_permissions'][role.id]:
-        await ctx.send(f"Permission '{permission}' not found for role '{role.name}'.")
+        await ctx.send(f"### Permission '{permission}' not found for role '{role.name}'.")
         return
 
     role_permissions.remove(permission)
-    await ctx.send(f"Permission '{permission}' removed for role '{role.name}'.")
+    await ctx.send(f"### Permission '{permission}' removed for role '{role.name}'.")
 
     config["role_permissions"][role_id_str] = role_permissions
     util.updateJSON("data/config.json", config)
@@ -321,7 +337,7 @@ async def list(ctx, role: discord.Role):
         await ctx.send("Invalid role provided.")
         return
 
-    role_permissions = f"Permissions for role '{role.name}':\n>>> "
+    role_permissions = f"## Permissions for role '{role.name}':\n>>> "
 
     rolestr = str(role.id)
 
@@ -331,7 +347,7 @@ async def list(ctx, role: discord.Role):
 
         await ctx.send(role_permissions)
     else:
-        await ctx.send("Role does not have any permissions")
+        await ctx.send("### Role does not have any permissions")
 
 
 
@@ -356,7 +372,7 @@ async def listplayers(ctx):
     if not players:
         await ctx.send("There are no players currently online.")
         return
-    await ctx.send(f"Players currently online:\n>>> " + '\n'.join(players))
+    await ctx.send(f"## Players currently online:\n>>> " + '\n'.join(players))
 
 
 #Run bot
