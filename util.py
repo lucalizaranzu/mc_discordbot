@@ -32,14 +32,19 @@ def requires_custom_permission(permission, cfg):
 
 def check_user_permissions(ctx, cfg, permission):
 
+    if permission not in cfg.get('existing_permissions', []):
+        print(f"Permission '{permission}' does not exist in config.")
+        return False
+
     if ctx.author.guild_permissions.administrator: #Administrator has all permissions
         return True
 
-    sender_roles = {role.id for role in ctx.author.roles}
+    sender_roles = {role for role in ctx.author.roles}
 
     for role in sender_roles:
         role_permissions = get_role_permissions(cfg, role)
         if permission in role_permissions:
+            print("Permission Granted")
             return True
 
     return False

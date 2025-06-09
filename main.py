@@ -57,7 +57,7 @@ async def sendmessage(ctx, *, arg):
     #Convert to JSON string (compact)
     tellraw_json = json.dumps(tellraw_obj)
 
-    await brcon.call_mc_command(f'/tellraw @a {tellraw_json}')
+    await brcon.call_mc_command(ctx, f'/tellraw @a {tellraw_json}')
 
 @bot.command()
 @requires_custom_permission("administrator", config)
@@ -65,11 +65,11 @@ async def mccommand(ctx, *, command):
     """
     Sends a command to the Minecraft server via RCON.
     """
-    response = await brcon.call_mc_command(str(command))
+    response = await brcon.call_mc_command(ctx, str(command))
     if response:
         await ctx.send(f"Executed command: {response}")
     else:
-        await ctx.send("Failed to execute command.")
+        return
 
 
 #Creates whitelist command group
@@ -95,13 +95,16 @@ async def add(ctx, arg):
         server_whitelist[sender_UUID] = []
         print("Added empty whitelist entry for user")
 
-    multiple_whitelist_okay = util.check_user_permissions(ctx, config, "multiple_whitelist")
+    multiple_whitelist_okay = util.check_user_permissions(ctx, config, "unlimited_whitelist")
 
     if multiple_whitelist_okay: #Case for if user can whitelist multiple users
-        print("User has moderator role, allowing multiple whitelist entries.")
 
         if arg not in server_whitelist[sender_UUID]:
-            await brcon.call_mc_command(f"/whitelist add {arg}")
+            result = await brcon.call_mc_command(ctx, f"/whitelist add {arg}")
+
+            if not result:
+                return
+
             server_whitelist[sender_UUID].append(arg)
             await ctx.send(f"User {arg} has been whitelisted.")
         else:
@@ -117,11 +120,19 @@ async def add(ctx, arg):
             return
 
         if currently_whitelisted:
-            await brcon.call_mc_command(f"/whitelist remove {currently_whitelisted}")
+            result = await brcon.call_mc_command(ctx, f"/whitelist remove {currently_whitelisted}")
+
+            if not result:
+                return
+
             print(f"Removed {currently_whitelisted} from whitelist.")
 
         print(f"Whitelisting user {arg}")
-        await brcon.call_mc_command(f"/whitelist add {arg}")
+        result = await brcon.call_mc_command(ctx, f"/whitelist add {arg}")
+
+        if not result:
+            return
+
         server_whitelist[sender_UUID] = [arg]
 
         msg = f"User {arg} has been whitelisted."
@@ -141,7 +152,11 @@ async def remove(ctx, arg):
         await ctx.send(f"User {arg} is not in your whitelist.")
         return
 
-    await brcon.call_mc_command(f"/whitelist remove {arg}")
+    result = await brcon.call_mc_command(ctx, f"/whitelist remove {arg}")
+
+    if not result:
+        return
+
     server_whitelist[sender_UUID].remove(arg)
     await ctx.send(f"User {arg} has been removed from your whitelist.")
 
@@ -150,7 +165,7 @@ async def remove(ctx, arg):
 @whitelist.command()
 async def list(ctx):
     """
-    Displays the current user's whitelisted user.
+    Displays the current user's whitelisted user(s).
     """
     sender_UUID = str(ctx.author.id)
 
@@ -166,6 +181,39 @@ async def list(ctx):
     else:
         await ctx.send("You have not whitelisted any users.")
 
+
+@whitelist.command()
+@requires_custom_permission("moderator", config)
+async def modremove(ctx, username: str):
+    """
+    Removes any whitelisted users from the whitelist, even if you did not personally whitelist them
+    """
+
+    all_user_whitelists = [user for user in server_whitelist]
+
+    if not all_user_whitelists:
+        await ctx.send("There are no whitelisted users on this server.")
+        return
+
+
+    for user_whitelist in all_user_whitelists:
+        if username in server_whitelist.get(user_whitelist):
+            result = await brcon.call_mc_command(ctx, f"/whitelist remove {username}")
+
+            if not result:
+                return
+
+            whitelist_username = bot.get_user(int(user_whitelist)).mention
+            if not whitelist_username:
+                whitelist_username = user_whitelist
+
+            server_whitelist[user_whitelist].remove(username)
+            await ctx.send(f"{username} has been removed from {whitelist_username}'s whitelist.\n",
+                           allowed_mentions=discord.AllowedMentions(roles=False)) #Disable mentions)
+
+            #Save changes
+            server_whitelist[user_whitelist].remove(username)
+            util.updateJSON("data/server_whitelist.json", server_whitelist)
 
 @whitelist.command()
 async def listall(ctx):
@@ -294,7 +342,10 @@ async def listplayers(ctx):
     """
     Lists all currently online players
     """
-    output = await bot_rcon.call_mc_command(f"/list")
+    output = await bot_rcon.call_mc_command(ctx, f"/list")
+
+    if not output:
+        return
 
     players = []
 
