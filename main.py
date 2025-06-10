@@ -234,6 +234,10 @@ async def modremove(ctx, username: str):
             server_whitelist[user_whitelist].remove(username)
             util.updateJSON("data/server_whitelist.json", server_whitelist)
 
+            return
+
+    await ctx.send(f"### User {username} is not whitelisted on this server.")
+
 @whitelist.command()
 async def listall(ctx):
     """
