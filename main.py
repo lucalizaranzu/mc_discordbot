@@ -73,8 +73,8 @@ async def mccommand(ctx, *, command):
 
 
 #Creates whitelist command group
-@bot.group(invoke_without_command=True)
 @requires_custom_permission("whitelist", config)
+@bot.group(invoke_without_command=True)
 async def whitelist(ctx):
     """
     Adds or removes users to/from whitelist, or lists
@@ -83,6 +83,7 @@ async def whitelist(ctx):
     """
     await ctx.send("## Available subcommands:\n>>> add\nremove\nlist\nlistall\ncheck\nmodremove") #default
 
+@requires_custom_permission("whitelist", config)
 @whitelist.command()
 async def add(ctx, arg):
     sender_UUID = str(ctx.author.id)
@@ -152,6 +153,7 @@ async def add(ctx, arg):
 
     util.updateJSON("data/server_whitelist.json", server_whitelist)
 
+@requires_custom_permission("whitelist", config)
 @whitelist.command()
 async def remove(ctx, arg):
     sender_UUID = str(ctx.author.id)
@@ -274,6 +276,7 @@ async def rolepermission(ctx):
     """
     await ctx.send("## Available subcommands:\n>>> add\nremove\nlist") #default
 
+@requires_custom_permission("administrator", config) #only admin can edit role permissions
 @rolepermission.command()
 async def add(ctx, role: discord.Role, permission: str):
 
@@ -301,6 +304,7 @@ async def add(ctx, role: discord.Role, permission: str):
     config["role_permissions"][role_id_str] = role_permissions
     util.updateJSON("data/config.json", config)
 
+@requires_custom_permission("administrator", config) #only admin can edit role permissions
 @rolepermission.command()
 async def remove(ctx, role: discord.Role, permission):
     """
@@ -328,6 +332,8 @@ async def remove(ctx, role: discord.Role, permission):
     config["role_permissions"][role_id_str] = role_permissions
     util.updateJSON("data/config.json", config)
 
+
+@requires_custom_permission("administrator", config) #only admin can edit role permissions
 @rolepermission.command()
 async def list(ctx, role: discord.Role):
     """

@@ -27,6 +27,7 @@ def requires_custom_permission(permission, cfg):
     async def predicate(ctx):
         if check_user_permissions(ctx, cfg, permission):
             return True
+        await ctx.send(f"### You do not have the required permission: {permission}")
         raise commands.CheckFailure("You do not have permission.")
     return commands.check(predicate)
 
@@ -36,8 +37,8 @@ def check_user_permissions(ctx, cfg, permission):
         print(f"Permission '{permission}' does not exist in config.")
         return False
 
-    if ctx.author.guild_permissions.administrator: #Administrator has all permissions
-        return True
+    #if ctx.author.guild_permissions.administrator: #Administrator has all permissions
+        #return True
 
     sender_roles = {role for role in ctx.author.roles}
 
