@@ -2,7 +2,8 @@
     "existing_permissions": [
         "administrator",
         "moderator",
-        "unlimited_whitelist"
+        "unlimited_whitelist",
+        "whitelist"
     ],
     "role_permissions": {
         "1380838095099793428": [

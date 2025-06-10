@@ -74,6 +74,7 @@ async def mccommand(ctx, *, command):
 
 #Creates whitelist command group
 @bot.group(invoke_without_command=True)
+@requires_custom_permission("whitelist", config)
 async def whitelist(ctx):
     """
     Adds or removes users to/from whitelist, or lists
@@ -348,9 +349,6 @@ async def list(ctx, role: discord.Role):
         await ctx.send(role_permissions)
     else:
         await ctx.send("### Role does not have any permissions")
-
-
-
 
 
 @bot.command()
