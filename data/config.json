@@ -1,4 +1,10 @@
 {
+    "program_locations": {
+        "ffmpeg": {
+            "Windows": "C:\\Program Files\\ffmpeg\\ffmpeg.exe",
+            "Linux": "/bin/ffmpeg"
+        }
+    },
     "existing_permissions": [
         "administrator",
         "moderator",

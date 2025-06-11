@@ -11,6 +11,9 @@ import os
 import bot_rcon
 import bot_rcon as brcon
 import util
+
+import voice_interaction as vi
+
 from util import requires_custom_permission, updateJSON
 
 #Environment variables
@@ -381,6 +384,29 @@ async def listplayers(ctx):
         return
     await ctx.send(f"## Players currently online:\n>>> " + '\n'.join(players))
 
+
+
+@bot.command()
+async def hh(ctx, arg = None):
+
+    if arg == "stop":
+        await vi.stop_playing_sound(ctx)
+        return
+
+    print("Playing hh sound")
+    hh_path = "assets/hh.mp3"
+
+    if not ctx.voice_client:
+        print("No voice client detected")
+
+    await vi.play_sound_in_channel(config, ctx, hh_path)
+
+@bot.command()
+async def disconnect(ctx):
+    """
+    Disconnects the bot from the voice channel
+    """
+    await vi.leave_voice_channel(ctx)
 
 #Run bot
 bot.run(token, log_handler = handler, log_level=logging.DEBUG)

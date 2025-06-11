@@ -62,3 +62,34 @@ def is_user_in_whitelist(data, username):
         if username in users:
             return True
     return False
+
+def get_program_path(config, platform, program):
+    prog_map = config.get("program_locations", {})
+    if program not in prog_map:
+        print(f"Program '{program}' not found in config.")
+        return None
+
+    platform_paths = prog_map[program]
+    if platform not in platform_paths:
+        print(f"Platform '{platform}' not found for program '{program}'.")
+        return None
+
+    return platform_paths[platform]
+
+def check_program_path(path):
+    import subprocess
+
+    try:
+        result = subprocess.run([path, "-version"], capture_output=True, text=True)
+        if result.returncode == 0:
+            return True
+        else:
+            print(f"Program at path '{path}' returned an error:\n{result.stderr}")
+            return False
+    except FileNotFoundError:
+        print(f"Program at path '{path}' not found")
+        return False
+    except Exception as e:
+        print(f"Unexpected error while checking '{path}': {e}")
+        return False
+
