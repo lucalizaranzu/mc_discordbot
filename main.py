@@ -319,14 +319,13 @@ async def remove(ctx, role: discord.Role, permission):
         return
 
     role_id_str = str(role.id)
-
     role_permissions = config['role_permissions'].get(role_id_str)
 
     if not role_permissions:
         await ctx.send(f"### Role '{role.name}' has no permissions to remove")
         return
 
-    if permission not in config['role_permissions'][role.id]:
+    if permission not in config['role_permissions'][role_id_str]:
         await ctx.send(f"### Permission '{permission}' not found for role '{role.name}'.")
         return
 
