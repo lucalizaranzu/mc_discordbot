@@ -116,7 +116,8 @@ class MusicPlayer:
 
     async def _play_file(self, sound_file_path):
         """Play a single file"""
-        print("Play file")
+
+        print("PLay file")
 
         ffmpeg_path = ut.get_program_path("FFMPEG")
         if not ffmpeg_path or not ut.check_program_path(ffmpeg_path):
@@ -135,68 +136,38 @@ class MusicPlayer:
         def after_playing(error):
             if error:
                 print(f"Player error: {error}")
-            else:
-                print(f"Song finished playing normally: {song_name}")
 
             def delayed_cleanup():
                 try:
-                    # Double-check that playback actually stopped
-                    if not voice_client.is_playing() and not voice_client.is_paused():
-                        self.remove_song(sound_file_path)
-                        print(f"Cleaned up: {sound_file_path}")
-
-                        # Clear the current audio source reference
-                        self.current_audio_source = None
-
-                        # Continue with next song if queue has items
-                        if self.is_playing and len(self.queue) > 0:
-                            try:
-                                future = run_coroutine_threadsafe(self.pla_next_song(), global_bot.loop)
-                            except Exception as ie:
-                                print(f"Error scheduling next song: {ie}")
-                                self.is_playing = False
-                        else:
-                            print("Queue empty or player stopped")
-                            self.is_playing = False
-                    else:
-                        print("Audio still playing, cleanup cancelled")
-
+                    self.remove_song(sound_file_path)
+                    print(f"Cleaned up: {sound_file_path}")
                 except Exception as ie:
                     print(f"Cleanup error: {ie}")
 
-            # Longer delay to ensure FFmpeg properly releases the file
-            threading.Timer(2.0, delayed_cleanup).start()
+                if self.is_playing:
+                    try:
+                        future = run_coroutine_threadsafe(self.pla_next_song(), global_bot.loop)
+                    except Exception as ie:
+                        print(f"Error scheduling next song: {ie}")
+                        self.is_playing = False
+
+            # Schedule cleanup with a slight delay to ensure FFmpeg releases the file
+            threading.Timer(0.5, delayed_cleanup).start()
 
         try:
-            # Create audio source with better options
-            ffmpeg_options = {
-                'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-                'options': '-vn'
-            }
-
-            audio_source = discord.FFmpegPCMAudio(
-                executable=ffmpeg_path,
-                source=sound_file_path,
-                **ffmpeg_options
-            )
-
-            # Store reference to prevent garbage collection
-            self.current_audio_source = audio_source
-
+            audio_source = discord.FFmpegPCMAudio(executable=ffmpeg_path, source=sound_file_path)
             voice_client.play(audio_source, after=after_playing)
             print(f"Started playing: {song_name}")
-
         except Exception as e:
             print(f"Failed to play audio: {e}")
             await self.ctx.send("### Error: Failed to play audio.")
             self.is_playing = False
-
             # Clean up on failure
             try:
                 if os.path.exists(sound_file_path):
                     os.remove(sound_file_path)
-            except Exception as cleanup_error:
-                print(f"Error cleaning up failed file: {cleanup_error}")
+            except:
+                pass
 
     def remove_song(self, song_path):
         """Remove a song from the queue and delete the file"""
