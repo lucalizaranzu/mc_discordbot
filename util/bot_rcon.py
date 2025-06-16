@@ -4,21 +4,32 @@ import asyncio
 import os
 import socket
 
+from . import util as ut
+
 # Load environment variables
 load_dotenv()
-
-rcon_password = os.getenv('RCON_PASSWORD')
-RCON_HOST = "192.168.50.114"
-RCON_PORT = 25575
 
 async def call_mc_command(ctx, command: str) -> str | None:
     thrown_error = False
     error_string = ""
 
+    user_server_config = ut.readJSON(f"data/config/{ctx.guild.id}.json")
+
+    rcon_ip = user_server_config.get("mcserver_ip", "")
+    if not rcon_ip:
+        await ctx.send("### No Minecraft server IP configured. Set it with !serverip.")
+        return None
+
+    rcon_port = user_server_config.get("rcon_port", 25575)
+
+    rcon_password = user_server_config.get("rcon_password", "")
+
+    print("Running command:", command)
+
     def run_rcon_command():
         nonlocal thrown_error, error_string
         try:
-            with MCRcon(RCON_HOST, rcon_password, port=RCON_PORT) as mcr:
+            with MCRcon(rcon_ip, rcon_password, port=rcon_port) as mcr:
                 return mcr.command(command)
         except ConnectionRefusedError as e:
             if e.errno == 10061:  #WinError 10061, server offline

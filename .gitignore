@@ -2,3 +2,10 @@
 .idea
 .venv/
 .venv1/
+
+#Ignore config and whitelist files
+data/config/*
+data/whitelist/*
+temp/*
+# Ignore Python cache files
+__pycache__/

@@ -1,0 +1,9 @@
+{
+      "existing_permissions": [
+        "administrator",
+        "moderator",
+        "unlimited_whitelist",
+        "whitelist",
+        "play_sound"
+      ]
+}
