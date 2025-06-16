@@ -7,17 +7,21 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def readJSON(file_path):
-    with open(file_path, "r") as f:
-        try:
-            data = json.load(f)
-            if not data:
-                print(f"JSON is empty, trying to read {file_path}")
-                return data
-            else:
-                return data
-        except json.JSONDecodeError:
-            print("Invalid or empty JSON file")
-            return {}
+    try:
+        with open(file_path, "r") as f:
+            try:
+                data = json.load(f)
+                if not data:
+                    print(f"JSON is empty, trying to read {file_path}")
+                    return data
+                else:
+                    return data
+            except json.JSONDecodeError:
+                print("Invalid or empty JSON file")
+                return {}
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+        return None  # or return {} depending on what you wan
 
 def updateJSON(path, data):
     with open(path, "w", encoding="utf-8") as f:

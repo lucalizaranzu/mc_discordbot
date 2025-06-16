@@ -61,7 +61,9 @@ def add_server(guild_id):
 
 
 def get_server(guild_id) -> Server | None:
+    print("here")
     if not ut.readJSON(f"data/config/{guild_id}.json"):
         print(f"No server config found for guild ID {guild_id}.")
         return None
+    print("found")
     return Server(guild_id)
