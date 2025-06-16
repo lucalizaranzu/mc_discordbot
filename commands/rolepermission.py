@@ -106,7 +106,7 @@ async def list(ctx, role: discord.Role):
 
     rolestr = str(role.id)
 
-    if rolestr in server_config['role_permissions'] and server_config['role_permissions'][rolestr]:
+    if rolestr in server_config['role_permissions']:
         for permission in set(server_config['role_permissions'].get(rolestr, [])):
             role_permissions += f"{permission}\n"
 

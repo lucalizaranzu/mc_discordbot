@@ -143,6 +143,7 @@ async def setdefaultrole(ctx, role: discord.Role):
     await ctx.send(f"### Default role set to {role.name} ({role.id})")
 
 @global_bot.command()
+@cb.custom_command("administrator")
 async def reloadserver(ctx):
     """
     Reloads the server
@@ -152,7 +153,13 @@ async def reloadserver(ctx):
 
     guild_id = ctx.guild.id
     print(f"Guild ID: {guild_id}")
-    sv.add_server(guild_id)
+    if not sv.get_server(guild_id):
+        sv.add_server(guild_id)
+        await ctx.send("### Server files generated successfully.")
+        return
+
+    await ctx.send("### Server files already exist. No changes made.")
+
 
 @global_bot.command()
 async def sendmessage(ctx, *, arg):
