@@ -143,11 +143,14 @@ async def setdefaultrole(ctx, role: discord.Role):
     await ctx.send(f"### Default role set to {role.name} ({role.id})")
 
 @global_bot.command()
-@cb.custom_command("administrator")
 async def reloadserver(ctx):
     """
     Reloads the server
     """
+
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("### Only the server administrator can run this command!")
+        return
 
     print("Generating server files")
 
