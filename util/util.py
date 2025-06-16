@@ -29,12 +29,11 @@ def updateJSON(path, data):
 
 
 
-def get_role_permissions(cfg, role):
+def get_role_permissions(cfg, role_id_str):
     """
     Returns a set of permissions for a given role based on the config.
     """
-    role_permissions = cfg.get('role_permissions', {})
-    return set(role_permissions.get(str(role.id), []))
+    return cfg.get("role_permissions", {}).get(role_id_str, [])
 
 def is_user_in_whitelist(data, username):
     for users in data.values():
