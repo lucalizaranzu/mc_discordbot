@@ -2,7 +2,7 @@ import discord
 from typing import cast
 
 from util import util as ut
-from commands.commands_base import custom_command, check_user_permissions
+from commands.commands_base import custom_command, has_permission
 from bot import global_bot
 from util import server as sv
 
@@ -11,7 +11,6 @@ from util import bot_rcon as brcon
 
 
 #Creates whitelist command group
-@custom_command("whitelist")
 @global_bot.group(invoke_without_command=True)
 async def whitelist(ctx):
     """
@@ -41,7 +40,7 @@ async def add(ctx, arg):
         server_whitelist[sender_UUID] = []
         print("Added empty whitelist entry for user")
 
-    multiple_whitelist_okay = check_user_permissions(ctx, server_config, "unlimited_whitelist")
+    multiple_whitelist_okay = has_permission(ctx, server_config, "unlimited_whitelist")
 
     remove_other_whitelisted_user = False
 
@@ -127,7 +126,7 @@ async def remove(ctx, arg):
     sender_server.update_whitelist()
 
 @whitelist.command()
-@custom_command()
+@custom_command("whitelist")
 async def list(ctx):
     """
     Displays the current user's whitelisted user(s).
@@ -153,7 +152,7 @@ async def list(ctx):
 
 
 @whitelist.command()
-@custom_command()
+@custom_command("administrator")
 async def modremove(ctx, username: str):
     """
     Removes any whitelisted users from the whitelist, even if you did not personally whitelist them
